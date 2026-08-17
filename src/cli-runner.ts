@@ -29,17 +29,35 @@ export function resolveGetnoteBinary(): string {
   return join(dirname(packageJson), 'bin', binary)
 }
 
+interface GetnoteInvocation {
+  command: string
+  prefixArgs: string[]
+}
+
+function resolveGetnoteInvocation(binaryPath?: string): GetnoteInvocation {
+  if (binaryPath) return { command: binaryPath, prefixArgs: [] }
+
+  try {
+    return { command: resolveGetnoteBinary(), prefixArgs: [] }
+  } catch {
+    return {
+      command: process.platform === 'win32' ? 'npx.cmd' : 'npx',
+      prefixArgs: ['--yes', '--package', '@getnote/cli@1.5.3', '--', 'getnote'],
+    }
+  }
+}
+
 export async function runGetnote(
   args: readonly string[],
   options: RunGetnoteOptions = {},
 ): Promise<unknown> {
-  const binaryPath = options.binaryPath ?? resolveGetnoteBinary()
+  const invocation = resolveGetnoteInvocation(options.binaryPath)
   const timeoutMs = options.timeoutMs ?? 120_000
   const maxOutputBytes = options.maxOutputBytes ?? 10 * 1024 * 1024
-  const commandArgs = [...args, '--output', 'json']
+  const commandArgs = [...invocation.prefixArgs, ...args, '--output', 'json']
 
   return await new Promise((resolve, reject) => {
-    const child = spawn(binaryPath, commandArgs, {
+    const child = spawn(invocation.command, commandArgs, {
       env: {
         ...process.env,
         ...(options.apiUrl ? { GETNOTE_API_URL: options.apiUrl } : {}),

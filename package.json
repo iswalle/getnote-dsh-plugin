@@ -1,7 +1,7 @@
 {
   "name": "@getnote/dsh-plugin",
   "version": "0.1.0",
-  "description": "DeepSeek Harness plugin for 得到大脑（Get笔记）",
+  "description": "在 DeepSeek Harness 中用自然语言搜索、保存和阅读得到大脑笔记",
   "type": "module",
   "main": "./lib/index.js",
   "types": "./lib/types/index.d.ts",
@@ -41,9 +41,6 @@
     "url": "https://github.com/iswalle/getnote-dsh-plugin/issues"
   },
   "license": "MIT",
-  "dependencies": {
-    "@getnote/cli": "^1.5.3"
-  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-skill-filesystem": ">=0.1.0-rc.6 <1",

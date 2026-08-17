@@ -1,58 +1,116 @@
-# GetNote Plugin for DeepSeek Harness
+# 在 DeepSeek Harness 中使用得到大脑
 
-在 DeepSeek Harness（`dsh`）中使用得到大脑（Get笔记）。插件复用
-[`@getnote/cli`](https://github.com/iswalle/getnote-cli) 的认证和 OpenAPI
-实现，不保存第二份凭据，也不重复实现业务接口。
+把得到大脑接入 DeepSeek Harness（`dsh`）。安装后，你可以直接用自然语言搜索、
+保存和阅读笔记，不需要复制 API 请求，也不需要单独配置 MCP。
 
-## 安装
+## 开始使用
+
+### 1. 安装插件
 
 ```bash
 dsh plugin --profile web add @getnote/dsh-plugin
 ```
 
-首次使用前完成浏览器授权：
+如果你通过 `npx` 使用 DSH：
+
+```bash
+npx @deepseek-ai/dsh plugin --profile web add @getnote/dsh-plugin
+```
+
+### 2. 登录得到大脑
 
 ```bash
 npx @getnote/cli@latest auth login
 ```
 
-然后重启 DSH，即可用自然语言搜索、保存和读取笔记：
+命令会打开浏览器，请按页面提示完成授权。得到大脑 OpenAPI 需要得到大脑会员。
+
+插件不要求你额外全局安装 CLI。运行笔记操作时，它会优先复用已有的 GetNote
+CLI；未安装时会自动通过 `npx` 调用兼容版本。上面的登录授权也可以被其他支持
+GetNote CLI 的 AI 工具复用。
+
+### 3. 重启 DSH
+
+重启 `dsh web` 后，就可以直接对 Agent 说：
 
 ```text
 帮我搜索得到大脑里关于 Agent Harness 的笔记
-把这个链接保存到得到大脑，并添加“待读”标签
+把 https://example.com/article 保存到得到大脑，添加“待读”标签
 列出最近 10 条笔记
+打开笔记 1896830231705320746
+列出我的知识库
 ```
 
-## 当前能力
+## 支持的能力
 
-插件注册以下原生 DSH Tools：
+- 检查得到大脑登录状态
+- 按自然语言语义搜索全部笔记
+- 在指定知识库内搜索
+- 保存文字、网页链接和本地图片
+- 保存时设置标题和标签
+- 查看最近笔记
+- 按 ID 查看笔记详情
+- 查看知识库列表
 
-- `getnote_auth_status`
-- `getnote_search`
-- `getnote_save`
-- `getnote_list_notes`
-- `getnote_get_note`
-- `getnote_list_knowledge_bases`
+插件还会自动提供 GetNote Skills，帮助 Agent 在操作认证、笔记、知识库和标签时
+选择正确的工具与参数。
 
-同时挂载随包发布的五个 GetNote Skills，帮助 Agent 正确选择工具并遵守笔记、
-知识库、标签和认证操作规则。
+## 常见问题
 
-## 调用关系
+### 提示未登录怎么办？
 
-```text
-DSH Skill / Tool
-  -> @getnote/dsh-plugin
-  -> bundled @getnote/cli executable
-  -> GetNote OpenAPI
+重新执行：
+
+```bash
+npx @getnote/cli@latest auth login
 ```
 
-插件以参数数组启动 CLI，并强制使用 JSON 输出；不会拼接 Shell 命令。认证由
-CLI 统一维护，因此终端、其他 Agent 和 DSH 可以复用同一份授权。
+完成授权后重启 DSH。如果仍然失败，可以运行：
 
-## 配置
+```bash
+npx @getnote/cli@latest doctor -o json
+```
 
-可以在 profile 的 `cordis.patch.yml` 中覆盖插件行：
+### 是否需要配置 API Key？
+
+普通用户不需要手工填写 API Key。推荐使用浏览器授权，插件会复用 GetNote CLI
+保存的登录状态。
+
+### 插件会把凭据发给模型吗？
+
+不会。认证由 GetNote CLI 在本地管理；插件只把笔记操作结果返回给 DSH。登录
+状态检查也不会把 API Key 或末尾字符写入模型上下文。
+
+### 为什么依赖 GetNote CLI？
+
+GetNote CLI 负责浏览器授权、调用得到大脑 OpenAPI、处理异步任务和返回结构化
+结果。插件负责把这些能力变成 DSH 原生工具。这样同一份授权可以跨终端和多个
+AI 工具复用，也能避免重复维护两套得到大脑接口。
+
+## 更新与卸载
+
+更新：
+
+```bash
+dsh plugin --profile web update @getnote/dsh-plugin
+```
+
+卸载：
+
+```bash
+dsh plugin --profile web remove @getnote/dsh-plugin
+```
+
+卸载插件不会退出得到大脑账号。如需同时退出：
+
+```bash
+npx @getnote/cli@latest auth logout
+```
+
+## 高级配置
+
+大多数用户不需要修改配置。需要调整长任务超时或输出上限时，可以在 profile 的
+`cordis.patch.yml` 中覆盖插件配置：
 
 ```yaml
 - id: getnote-tools
@@ -63,42 +121,28 @@ CLI 统一维护，因此终端、其他 Agent 和 DSH 可以复用同一份授�
     maxOutputBytes: 10485760
 ```
 
-`binaryPath` 可用于开发或诊断；正常安装不需要设置，插件会解析自己依赖的
-`@getnote/cli` 可执行文件。只有明确联调测试环境时才应配置 `apiUrl`。
+`binaryPath` 和 `apiUrl` 仅用于开发或联调环境。
 
-## 本地开发
+## 安全边界
+
+- 插件只开放明确的得到大脑操作，不提供任意 Shell 参数入口。
+- CLI 参数通过参数数组传递，不拼接 Shell 命令。
+- 删除和批量修改等高风险能力尚未在首版开放。
+- 插件与其他 DSH 插件一样，在当前用户权限下运行；请只从可信来源安装。
+
+## 开发
 
 ```bash
 npm install
 npm run check
 npm test
 npm run build
-
-dsh plugin --profile web add .
-dsh --profile web --dump-config
+npm pack --dry-run
 ```
 
-从 GitHub 源码安装时，pnpm 需要允许本包运行 `prepare` 构建脚本。正式 npm
-包包含预构建产物，不需要安装时构建授权。
-
-## 发布
-
-版本号与 Git tag 保持一致：
-
-```bash
-npm version patch
-git push origin HEAD --follow-tags
-```
-
-推送 `v*` tag 后，GitHub Actions 会检查、测试、构建、创建 GitHub Release，
-并通过仓库 Secret `NPM` 发布公开 npm 包。
-
-## 安全
-
-- 插件与当前 DSH 进程拥有相同的本机权限。
-- 凭据由 `@getnote/cli` 管理，不进入模型上下文。
-- 插件只注册明确的 GetNote 操作，不提供任意 Shell 参数入口。
-- 删除、批量修改等高风险能力尚未在首版开放。
+项目通过 `@getnote/cli` 调用得到大脑能力，并把五个 GetNote Skills 随 npm
+包一同发布。推送与 `package.json` 版本一致的 `v*` tag 后，GitHub Actions 会
+执行检查、测试、构建并发布 npm 包。
 
 ## License
 
