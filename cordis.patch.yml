@@ -1,0 +1,4 @@
+- insert:
+    - id: getnote-tools
+      name: '@getnote/dsh-plugin'
+      inject: [tools, skills]
