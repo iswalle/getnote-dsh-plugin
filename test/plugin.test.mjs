@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict'
+import { readdir } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
 import { apply } from '../lib/index.js'
+
+const here = dirname(fileURLToPath(import.meta.url))
+
+test('bundles only the DSH-specific guidance skill', async () => {
+  const skills = await readdir(join(here, '..', 'skills'))
+  assert.deepEqual(skills, ['getnote-dsh'])
+})
 
 test('registers the GetNote skill provider and six model tools', () => {
   const tools = []

@@ -143,4 +143,9 @@ export function apply(ctx: Context, config: Config) {
   }))
 }
 
-export { GetnoteCliError, resolveGetnoteBinary, runGetnote } from './cli-runner.js'
+export {
+  GetnoteCliError,
+  resolveGetnoteBinary,
+  resolveGetnoteFromPath,
+  runGetnote,
+} from './cli-runner.js'

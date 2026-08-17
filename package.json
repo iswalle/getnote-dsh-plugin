@@ -1,6 +1,6 @@
 {
   "name": "@getnote/dsh-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "在 DeepSeek Harness 中用自然语言搜索、保存和阅读得到大脑笔记",
   "type": "module",
   "main": "./lib/index.js",
@@ -13,7 +13,7 @@
   },
   "files": [
     "lib/",
-    "skills/",
+    "skills/getnote-dsh/",
     "cordis.patch.yml",
     "README.md",
     "LICENSE"

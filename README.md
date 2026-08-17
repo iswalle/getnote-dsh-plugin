@@ -25,9 +25,9 @@ npx @getnote/cli@latest auth login
 
 命令会打开浏览器，请按页面提示完成授权。得到大脑 OpenAPI 需要得到大脑会员。
 
-插件不要求你额外全局安装 CLI。运行笔记操作时，它会优先复用已有的 GetNote
-CLI；未安装时会自动通过 `npx` 调用兼容版本。上面的登录授权也可以被其他支持
-GetNote CLI 的 AI 工具复用。
+插件不要求你额外全局安装 CLI。运行笔记操作时，它会先使用本机 `PATH` 中已有的
+`getnote`，再尝试插件环境中的 GetNote CLI；都没有时会自动通过 `npx` 调用兼容
+版本。上面的登录授权也可以被其他支持 GetNote CLI 的 AI 工具复用。
 
 ### 3. 重启 DSH
 
@@ -52,8 +52,9 @@ GetNote CLI 的 AI 工具复用。
 - 按 ID 查看笔记详情
 - 查看知识库列表
 
-插件还会自动提供 GetNote Skills，帮助 Agent 在操作认证、笔记、知识库和标签时
-选择正确的工具与参数。
+插件会提供一个轻量的 DSH 引导 Skill，让 Agent 优先选择这些原生工具。若你已经
+在本机安装了更完整的 GetNote Skills，DSH 仍可正常发现并使用它们，插件不会再
+复制一套相同 Skill，也不会覆盖你的版本。
 
 ## 常见问题
 
@@ -140,9 +141,9 @@ npm run build
 npm pack --dry-run
 ```
 
-项目通过 `@getnote/cli` 调用得到大脑能力，并把五个 GetNote Skills 随 npm
-包一同发布。推送与 `package.json` 版本一致的 `v*` tag 后，GitHub Actions 会
-执行检查、测试、构建并发布 npm 包。
+项目通过 `@getnote/cli` 调用得到大脑能力，并随 npm 包提供一个只负责工具选择的
+DSH 引导 Skill。推送与 `package.json` 版本一致的 `v*` tag 后，GitHub Actions
+会执行检查、测试、构建并发布 npm 包。
 
 ## License
 

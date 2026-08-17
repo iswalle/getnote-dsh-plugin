@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process'
+import { accessSync, constants } from 'node:fs'
 import { createRequire } from 'node:module'
-import { dirname, join } from 'node:path'
+import { delimiter, dirname, join } from 'node:path'
 
 const require = createRequire(import.meta.url)
 
@@ -34,8 +35,32 @@ interface GetnoteInvocation {
   prefixArgs: string[]
 }
 
+export function resolveGetnoteFromPath(
+  pathValue = process.env.PATH ?? '',
+  pathExtValue = process.env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM',
+): string | undefined {
+  const extensions = process.platform === 'win32'
+    ? pathExtValue.split(';').filter(Boolean)
+    : ['']
+
+  for (const directory of pathValue.split(delimiter).filter(Boolean)) {
+    for (const extension of extensions) {
+      const candidate = join(directory, `getnote${extension.toLowerCase()}`)
+      try {
+        accessSync(candidate, constants.X_OK)
+        return candidate
+      } catch {
+        // Continue searching the remaining PATH entries.
+      }
+    }
+  }
+}
+
 function resolveGetnoteInvocation(binaryPath?: string): GetnoteInvocation {
   if (binaryPath) return { command: binaryPath, prefixArgs: [] }
+
+  const pathBinary = resolveGetnoteFromPath()
+  if (pathBinary) return { command: pathBinary, prefixArgs: [] }
 
   try {
     return { command: resolveGetnoteBinary(), prefixArgs: [] }

@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict'
-import { chmod } from 'node:fs/promises'
+import { chmod, mkdtemp, symlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
 
-import { GetnoteCliError, runGetnote } from '../lib/index.js'
+import { GetnoteCliError, resolveGetnoteFromPath, runGetnote } from '../lib/index.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fakeCli = join(here, '..', 'fixtures', 'fake-getnote.mjs')
@@ -21,6 +22,13 @@ test('appends the JSON output flag', async () => {
   assert.deepEqual(result, {
     args: ['search', 'agent harness', '--output', 'json'],
   })
+})
+
+test('discovers an installed getnote executable from PATH', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'getnote-path-'))
+  await symlink(fakeCli, join(directory, 'getnote'))
+
+  assert.equal(resolveGetnoteFromPath(directory), join(directory, 'getnote'))
 })
 
 test('surfaces non-zero CLI exits', async () => {
