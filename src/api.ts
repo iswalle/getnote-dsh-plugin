@@ -12,6 +12,8 @@ export interface Credential {
   expiresAt?: number
 }
 
+export const MEMBERSHIP_URL = 'https://www.biji.com/checkout?product_alias=9Ab36BB3ZD&spm=openapi_dsh'
+
 export class GetnoteApiError extends Error {
   constructor(
     message: string,
@@ -114,7 +116,13 @@ type Query = Record<string, string | number | boolean | undefined | null>
 interface Envelope {
   success?: boolean
   data?: unknown
-  error?: { code?: string | number, message?: string, reason?: string } | null
+  error?: {
+    code?: string | number
+    message?: string
+    reason?: string
+    retry_after_seconds?: number
+    rate_limit_detail?: { retry_after_seconds?: number } | null
+  } | null
   // Legacy console-style envelope
   h?: { c?: number, e?: string }
   c?: unknown
@@ -207,8 +215,23 @@ export class GetnoteApi {
         response.status,
       )
     }
-    throw new GetnoteApiError(String(message), code, response.status)
+    throw new GetnoteApiError(describeError(String(message), code, parsed.error ?? undefined, response), code, response.status)
   }
+}
+
+/** Add the guidance the model needs for quota, rate-limit and membership errors. */
+function describeError(message: string, code: string | number | undefined, error: Envelope['error'] | undefined, response: Response): string {
+  const parts = [message]
+  if (error?.reason) parts.push(`(reason: ${error.reason})`)
+  if (code === 10201 || error?.reason === 'not_member') {
+    parts.push(`This operation needs a GetNote membership: ${MEMBERSHIP_URL}`)
+  } else if (response.status === 429 || code === 10202 || code === 10005) {
+    const header = Number(response.headers.get('Retry-After'))
+    const wait = error?.retry_after_seconds ?? error?.rate_limit_detail?.retry_after_seconds ?? (Number.isFinite(header) && header > 0 ? header : undefined)
+    const when = wait !== undefined ? ` Retry after about ${wait} seconds.` : ''
+    parts.push(`Rate limit or quota reached.${when} Do not retry repeatedly; call getnote_quota to see the current quota.`)
+  }
+  return parts.join(' ')
 }
 
 export interface LoginStart {

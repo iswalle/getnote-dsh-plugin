@@ -90,6 +90,7 @@ test('registers the full tool set without any CLI dependency', async () => {
     'getnote_logout',
     'getnote_note_outline',
     'getnote_note_section',
+    'getnote_quota',
     'getnote_read_notes',
     'getnote_remove_note_tag',
     'getnote_save',
@@ -255,4 +256,15 @@ test('unfiltered list is trimmed to limit with a continuation cursor', async () 
   assert.deepEqual(out.notes.map(n => n.note_id), ['100', '99', '98'])
   assert.equal(out.next_cursor, '98')
   assert.equal(out.has_more, true)
+})
+
+test('quota tool and quota/membership error guidance', async () => {
+  const h = await harness(({ path }) => {
+    if (path.endsWith('/rate-limit/quota')) return ok({ read: { daily: { limit: 100, used: 1, remaining: 99 } } })
+    if (path.endsWith('/recall')) return [429, { success: false, error: { code: 10202, message: 'quota exceeded', reason: 'daily_exceeded', retry_after_seconds: 3600 } }]
+    return [403, { success: false, error: { code: 10201, message: 'OpenAPI 仅对会员开放', reason: 'not_member' } }]
+  })
+  assert.match(await h.run('getnote_quota'), /remaining/)
+  await assert.rejects(h.run('getnote_search', { query: 'x' }), e => /3600 seconds/.test(e.message) && /Do not retry/.test(e.message) && /getnote_quota/.test(e.message))
+  await assert.rejects(h.run('getnote_get_note', { note_id: '1' }), /checkout/)
 })

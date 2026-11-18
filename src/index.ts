@@ -253,6 +253,14 @@ export function apply(ctx: Context, config: Config, runtime: Runtime = createRun
     },
   })
 
+  tool({
+    name: 'getnote_quota',
+    description: 'Show the account\'s current API quota and usage. Free accounts can use GetNote; free and member accounts have different quotas.',
+    parameters: {},
+    readOnly: true,
+    run: (_a, signal) => api.get('/resource/rate-limit/quota', {}, signal),
+  })
+
   // ---- Finding notes -------------------------------------------------------
 
   tool({
@@ -532,5 +540,6 @@ export {
   DSH_CLIENT_ID,
   GetnoteApi,
   GetnoteApiError,
+  MEMBERSHIP_URL,
   NotLoggedInError,
 } from './api.js'

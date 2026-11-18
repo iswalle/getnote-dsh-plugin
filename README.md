@@ -22,7 +22,11 @@ npx @deepseek-ai/dsh plugin --profile web add @getnote/dsh-plugin
 
 重启 `dsh web` 后，对 Agent 说「登录得到大脑」。Agent 会给你一个授权链接和
 确认码，在浏览器打开链接、登录并确认即可。授权页上的应用名是
-「DeepSeek Harness 插件」。得到大脑 OpenAPI 需要得到大脑会员。
+「DeepSeek Harness 插件」。
+
+**免费账号也可以使用，无需先开通会员。** 免费与会员享有不同额度，可以对 Agent
+说「查看得到大脑额度」查看当前实际额度。额度用尽后按返回的重置时间等待；需要
+更高默认额度时，可[升级会员](https://www.biji.com/checkout?product_alias=9Ab36BB3ZD&spm=openapi_dsh)。
 
 ### 3. 开始使用
 
@@ -38,7 +42,7 @@ npx @deepseek-ai/dsh plugin --profile web add @getnote/dsh-plugin
 
 | 类别 | 能力 |
 | --- | --- |
-| 登录 | 浏览器授权、查看状态、退出 |
+| 账号 | 浏览器授权、查看状态、查看额度、退出 |
 | 查找 | 语义搜索（全部或指定知识库）、按类型/来源/时间/知识库筛选列表、翻页 |
 | 阅读 | 笔记详情、长笔记目录和分段阅读、批量阅读 |
 | 写入 | 保存文字/链接/图片链接、查询链接处理进度、修改标题和正文、加删标签 |
