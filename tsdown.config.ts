@@ -12,6 +12,5 @@ export default defineConfig({
     '@deepseek-ai/dsh-skill-filesystem',
     '@deepseek-ai/dsh-tools',
     '@deepseek-ai/schemastery',
-    '@getnote/cli',
   ],
 })

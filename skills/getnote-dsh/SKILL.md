@@ -1,27 +1,44 @@
 ---
 name: getnote-dsh
-description: 在 DeepSeek Harness 中使用得到大脑。用户要搜索、保存、列出或打开得到大脑笔记，查看知识库或检查登录状态时使用。
+description: 在 DeepSeek Harness 中使用得到大脑。用户要登录得到大脑，搜索、保存、列出、阅读、修改、删除或分享笔记，管理标签和知识库时使用。
 ---
 
 # 得到大脑（DSH）
 
-优先使用插件提供的 `getnote_*` 原生工具完成操作：
+使用插件提供的 `getnote_*` 原生工具完成操作，不需要本机安装 GetNote CLI。
 
-- `getnote_auth_status`：检查登录状态。
-- `getnote_search`：语义搜索笔记，可限定知识库。
-- `getnote_save`：保存文字、链接或本地图片，可设置标题和标签。
-- `getnote_list_notes`：列出最近笔记。
-- `getnote_get_note`：按字符串 ID 打开笔记。
-- `getnote_list_knowledge_bases`：列出知识库。
+## 登录
 
-笔记 ID 必须始终按字符串处理，不得转换为数字。
+- 任何工具提示未登录时，调用 `getnote_login`，把返回的链接和确认码原样告诉用户，请用户在浏览器打开、登录并确认。
+- 用户说已确认后，调用 `getnote_auth_status` 确认结果，再继续原来的操作。
+- `getnote_logout` 只清除本机授权；要彻底取消，请用户在得到大脑账号设置里撤销。
 
-如果用户请求的能力不在这些工具中，优先使用 DSH 已发现的用户级 GetNote Skill；
-不要为了绕过工具边界自行拼接未经说明的 Shell 命令。若没有相应 Skill，说明当前
-插件尚未支持该操作，并建议用户安装或更新 GetNote Skills。
+## 找笔记
 
-认证由本机 GetNote CLI 管理。未登录时，请用户在终端执行：
+- `getnote_search`：语义搜索，可用 `knowledge_base_id` 限定知识库；结果多时加 `snippet_chars` 只取片段。
+- `getnote_list_notes`：按时间倒序列笔记，可按类型、来源、创建/编辑时间、知识库筛选；翻页用上一页的 `next_cursor`。
+  - 录音台笔记：`source=vendor_moan`；录音卡：`source=getseed`。
 
-```bash
-npx @getnote/cli@latest auth login
-```
+## 读笔记
+
+- `getnote_get_note`：读一条笔记全文和标签（含标签 ID）。
+- 长笔记先 `getnote_note_outline` 拿目录和 offset，再用 `getnote_note_section` 按 offset 或关键词读片段；offset 只用接口返回的，不要自己算。
+- `getnote_read_notes`：一次读多条（最多 20），没读完的在 `pending_ids` 里，再调一次。
+
+## 写笔记
+
+- `getnote_save`：保存文字、网页链接或 HTTPS 图片链接，可带标题、标签、知识库、父笔记。链接是异步处理，用 `getnote_task_status` 查结果；重试同一次保存时带同一个 `idempotency_key`，避免重复。
+- `getnote_update_note`：改标题；正文只能改纯文本笔记；`tags` 会替换全部标签。只加标签用 `getnote_add_note_tags`，删一个用 `getnote_remove_note_tag`。
+- `getnote_delete_note`：移入回收站（可在 App 恢复）。
+- `getnote_share_note`：公开分享，拿到链接的人都能看。
+
+## 知识库
+
+- `getnote_list_knowledge_bases`：自己的知识库；`subscribed=true` 看订阅的。
+- `getnote_list_kb_notes`、`getnote_kb_add_notes`、`getnote_kb_remove_notes`（只移出，不删笔记）。
+
+## 规则
+
+- 笔记 ID、知识库 ID、标签 ID 一律按字符串处理，不要转成数字。
+- 删除、公开分享、替换正文或全部标签、移出知识库会先请用户确认；用户拒绝就停下，不要换别的工具绕过去。
+- 不支持的操作（如上传本地图片、新建知识库）直接告诉用户插件暂不支持。
