@@ -42,3 +42,14 @@ test('surfaces non-zero CLI exits', async () => {
     },
   )
 })
+
+test('points the user to an upgrade when the CLI is too old', async () => {
+  await assert.rejects(
+    runGetnote(['--outdated'], { binaryPath: fakeCli }),
+    (error) => {
+      assert.ok(error instanceof GetnoteCliError)
+      assert.match(error.message, /needs getnote CLI >= \d+\.\d+\.\d+/)
+      return true
+    },
+  )
+})

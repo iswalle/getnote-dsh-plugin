@@ -11,6 +11,19 @@ export interface RunGetnoteOptions {
   signal?: AbortSignal
   timeoutMs?: number
   maxOutputBytes?: number
+  /** Text written to the CLI's stdin (used with `--stdin` for long note bodies). */
+  input?: string
+}
+
+/** Minimum CLI version whose command set this plugin targets. */
+export const MIN_CLI_VERSION = '1.10.0'
+
+const OUTDATED_CLI_PATTERN = /unknown (command|flag|shorthand flag)/i
+
+function withUpgradeHint(message: string): string {
+  if (!OUTDATED_CLI_PATTERN.test(message)) return message
+  return `${message}\n\nThis GetNote plugin needs getnote CLI >= ${MIN_CLI_VERSION}. `
+    + 'Ask the user to run `getnote update` (or `npm i -g @getnote/cli@latest`) in a terminal.'
 }
 
 export class GetnoteCliError extends Error {
@@ -67,7 +80,7 @@ function resolveGetnoteInvocation(binaryPath?: string): GetnoteInvocation {
   } catch {
     return {
       command: process.platform === 'win32' ? 'npx.cmd' : 'npx',
-      prefixArgs: ['--yes', '--package', '@getnote/cli@1.5.3', '--', 'getnote'],
+      prefixArgs: ['--yes', '--package', `@getnote/cli@${MIN_CLI_VERSION}`, '--', 'getnote'],
     }
   }
 }
@@ -87,7 +100,7 @@ export async function runGetnote(
         ...process.env,
         ...(options.apiUrl ? { GETNOTE_API_URL: options.apiUrl } : {}),
       },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [options.input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
       windowsHide: true,
       signal: options.signal,
     })
@@ -119,8 +132,15 @@ export async function runGetnote(
       target.push(chunk)
     }
 
-    child.stdout.on('data', (chunk: Buffer) => capture(stdout, chunk))
-    child.stderr.on('data', (chunk: Buffer) => capture(stderr, chunk))
+    if (options.input !== undefined && child.stdin) {
+      child.stdin.on('error', () => {
+        // The CLI may exit before reading stdin; the exit code reports the failure.
+      })
+      child.stdin.end(options.input, 'utf8')
+    }
+
+    child.stdout!.on('data', (chunk: Buffer) => capture(stdout, chunk))
+    child.stderr!.on('data', (chunk: Buffer) => capture(stderr, chunk))
 
     timer = setTimeout(() => {
       child.kill('SIGTERM')
@@ -145,7 +165,7 @@ export async function runGetnote(
         const stderrText = Buffer.concat(stderr).toString('utf8').trim()
         if (code !== 0) {
           reject(new GetnoteCliError(
-            stderrText || stdoutText || `getnote exited with code ${String(code)}`,
+            withUpgradeHint(stderrText || stdoutText || `getnote exited with code ${String(code)}`),
             code,
             stderrText,
           ))
