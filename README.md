@@ -24,9 +24,8 @@ npx @deepseek-ai/dsh plugin --profile web add @getnote/dsh-plugin
 确认码，在浏览器打开链接、登录并确认即可。授权页上的应用名是
 「DeepSeek Harness 插件」。
 
-**免费账号也可以使用，无需先开通会员。** 免费与会员享有不同额度，可以对 Agent
-说「查看得到大脑额度」查看当前实际额度。额度用尽后按返回的重置时间等待；需要
-更高默认额度时，可[升级会员](https://www.biji.com/checkout?product_alias=9Ab36BB3ZD&spm=openapi_dsh)。
+所有得到大脑用户授权后都可以调用，会员享有更高额度（[了解会员](https://www.biji.com/checkout?product_alias=9Ab36BB3ZD&spm=openapi_dsh)）。
+对 Agent 说「查看得到大脑额度」可以看当前额度，额度用完后按返回的重置时间等待。
 
 ### 3. 开始使用
 

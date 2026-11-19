@@ -255,7 +255,7 @@ export function apply(ctx: Context, config: Config, runtime: Runtime = createRun
 
   tool({
     name: 'getnote_quota',
-    description: 'Show the account\'s current API quota and usage. Free accounts can use GetNote; free and member accounts have different quotas.',
+    description: 'Show the account\'s current API quota and usage. All users can call the API; members have higher quotas.',
     parameters: {},
     readOnly: true,
     run: (_a, signal) => api.get('/resource/rate-limit/quota', {}, signal),
