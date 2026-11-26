@@ -59,6 +59,8 @@ function ids(values: readonly string[] | undefined, label: string, max: number):
 
 const URL_PATTERN = /^https?:\/\/\S+$/i
 
+const GENERATION_HINT = ' If a note\'s generation_status is present and not "completed", its content may be empty or partial; do not treat it as final, read the note again later.'
+
 // ---------------------------------------------------------------------------
 // Confirmation policy
 // ---------------------------------------------------------------------------
@@ -287,7 +289,7 @@ export function apply(ctx: Context, config: Config, runtime: Runtime = createRun
 
   tool({
     name: 'getnote_list_notes',
-    description: 'List the user\'s notes, newest first, with optional filters. Paginate with next_cursor from the previous page.',
+    description: 'List the user\'s notes, newest first, with optional filters. Paginate with next_cursor from the previous page.' + GENERATION_HINT,
     parameters: {
       limit: { type: 'integer', default: 20, description: 'Notes per page, 1-100.' },
       cursor: { type: 'string', description: 'next_cursor returned by the previous page.' },
@@ -312,7 +314,7 @@ export function apply(ctx: Context, config: Config, runtime: Runtime = createRun
 
   tool({
     name: 'getnote_get_note',
-    description: 'Get one note in full by its string ID, including its tags (with tag IDs). For very long notes use getnote_note_outline and getnote_note_section instead.',
+    description: 'Get one note in full by its string ID, including its tags (with tag IDs). For very long notes use getnote_note_outline and getnote_note_section instead.' + GENERATION_HINT,
     parameters: { note_id: noteId },
     readOnly: true,
     run: (a, signal) => api.get('/resource/note/detail', { id: a.note_id }, signal),
@@ -494,7 +496,7 @@ export function apply(ctx: Context, config: Config, runtime: Runtime = createRun
 
   tool({
     name: 'getnote_list_kb_notes',
-    description: 'List the notes in one knowledge base, with optional filters.',
+    description: 'List the notes in one knowledge base, with optional filters.' + GENERATION_HINT,
     parameters: {
       topic_id: topicId,
       page: { type: 'integer', description: 'Page number, starting from 1.' },
