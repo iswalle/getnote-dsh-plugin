@@ -31,6 +31,7 @@ description: 在 DeepSeek Harness 中使用得到大脑。用户要登录得到�
 - `getnote_get_note`：读一条笔记全文和标签（含标签 ID）。
 - 长笔记先 `getnote_note_outline` 拿目录和 offset，再用 `getnote_note_section` 按 offset 或关键词读片段；offset 只用接口返回的，不要自己算。
 - `getnote_read_notes`：一次读多条（最多 20），没读完的在 `pending_ids` 里，再调一次。
+- 笔记带 `generation_status` 且不是 `completed`（生成中、附件处理中、失败等）时，正文可能为空或不完整，不要当最终内容，告诉用户还在生成，过会儿再用 `getnote_get_note` 读；没有这个字段时照常处理。
 
 ## 写笔记
 

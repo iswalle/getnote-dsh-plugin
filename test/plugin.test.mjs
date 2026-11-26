@@ -268,3 +268,27 @@ test('quota tool and quota/membership error guidance', async () => {
   await assert.rejects(h.run('getnote_search', { query: 'x' }), e => /3600 seconds/.test(e.message) && /Do not retry/.test(e.message) && /getnote_quota/.test(e.message))
   await assert.rejects(h.run('getnote_get_note', { note_id: '1' }), /checkout/)
 })
+
+test('note list, detail and knowledge notes keep generation_status when present and omit it when absent', async () => {
+  const notes = [
+    { note_id: '3', title: 'new', content: '', generation_status: 'generating' },
+    { note_id: '2', title: 'done', content: 'body', generation_status: 'completed' },
+    { note_id: '1', title: 'legacy', content: 'old server' },
+  ]
+  const h = await harness(({ path }) => path.endsWith('/note/detail')
+    ? ok({ note: notes[0] })
+    : ok({ notes, has_more: false, next_cursor: '' }))
+  const unfiltered = JSON.parse(await h.run('getnote_list_notes', { limit: 2 }))
+  assert.deepEqual(unfiltered.notes.map(n => n.generation_status), ['generating', 'completed'])
+  const filtered = JSON.parse(await h.run('getnote_list_notes', { source: 'web' }))
+  assert.deepEqual(filtered.notes.map(n => n.generation_status), ['generating', 'completed', undefined])
+  assert.equal('generation_status' in filtered.notes[2], false)
+  const kb = JSON.parse(await h.run('getnote_list_kb_notes', { topic_id: 'kb' }))
+  assert.equal(kb.notes[0].generation_status, 'generating')
+  assert.equal('generation_status' in kb.notes[2], false)
+  const detail = JSON.parse(await h.run('getnote_get_note', { note_id: '3' }))
+  assert.equal(detail.note.generation_status, 'generating')
+  for (const name of ['getnote_list_notes', 'getnote_get_note', 'getnote_list_kb_notes']) {
+    assert.match(h.tools.get(name).description, /generation_status/)
+  }
+})
